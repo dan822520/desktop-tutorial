@@ -60,11 +60,17 @@
 │   ├── scripts/            # 数据库初始化脚本
 │   ├── package.json
 │   └── tsconfig.json
-├── web-admin/              # Web管理后台（待开发）
+├── web-admin/              # Web管理后台（内含接口测试 Web 应用）
 │   └── src/
+│       ├── app/             # 应用入口与页面骨架
+│       ├── components/      # 公共组件（例如响应展示）
+│       ├── features/        # 资产/盘点/维修/调拨等业务测试模块
+│       ├── services/        # API 客户端与网络工具
+│       ├── styles/          # 全局样式文件
+│       └── types/           # 共享类型定义
 ├── mobile-app/             # 移动端H5（待开发）
 │   └── src/
-├── docs/                   # 文档
+├── docs/                   # 文档（新增跨平台部署指南）
 └── README.md
 ```
 
@@ -80,6 +86,12 @@
 ```bash
 # 后端
 cd backend
+npm install
+```
+
+```bash
+# 前端接口测试台
+cd web-admin
 npm install
 ```
 
@@ -133,6 +145,8 @@ npx ts-node scripts/seed.ts
 - **超级管理员**：用户名 `admin`，密码 `admin123`
 - **测试员工**：用户名 `employee001`，密码 `123456`
 
+> 提示：后续可以通过接口测试台中的“测试数据”面板或调用 `/api/test-data` 接口快速生成更多角色与业务数据。
+
 ### 5. 启动后端服务
 
 ```bash
@@ -166,6 +180,39 @@ curl http://localhost:3000/api/assets \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
+### 7. 测试数据填充工具
+
+接口测试前端新增“测试数据”标签页（仅超级管理员可见），可一键完成以下操作：
+
+1. **填充演示数据**：创建 3 个组织、3 个部门、4 个测试账号以及覆盖资产、调拨、维修、盘点的完整样例数据。
+2. **卸载演示数据**：删除所有以 `TEST-` 标识的演示数据，避免污染自定义环境。
+3. **查看状态**：随时查看测试数据是否已安装以及各业务实体数量。
+
+填充后将新增以下测试账号（默认密码 `Test1234!`）：
+
+| 用户名 | 角色 | 用途 |
+|--------|------|------|
+| `test-super` | SUPER_ADMIN | 验证超级管理员流程及测试数据面板 |
+| `test-manager` | ORG_ADMIN | 演示调拨、盘点审批流程 |
+| `test-tech` | REPAIR_STAFF, EMPLOYEE | 演示维修派工与扫码盘点 |
+| `test-employee` | EMPLOYEE | 演示普通员工提交申请 |
+
+也可以直接通过 API 进行操作（需要超级管理员 Token）：
+
+```bash
+# 查询测试数据状态
+curl http://localhost:3000/api/test-data \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+
+# 填充测试数据
+curl -X POST http://localhost:3000/api/test-data \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+
+# 卸载测试数据
+curl -X DELETE http://localhost:3000/api/test-data \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
 ## 📚 API文档
 
 ### 认证接口
@@ -187,6 +234,14 @@ curl http://localhost:3000/api/assets \
 | PUT | `/api/assets/:id` | 更新资产 | 管理员 |
 | DELETE | `/api/assets/:id` | 删除资产（标记报废） | 管理员 |
 | POST | `/api/assets/qrcode/batch` | 批量生成二维码 | 管理员 |
+
+### 测试数据接口
+
+| 方法 | 路径 | 说明 | 权限 |
+|------|------|------|------|
+| GET | `/api/test-data` | 获取测试数据安装状态及数量 | SUPER_ADMIN / ORG_ADMIN |
+| POST | `/api/test-data` | 填充官方测试数据集 | SUPER_ADMIN |
+| DELETE | `/api/test-data` | 卸载官方测试数据集 | SUPER_ADMIN |
 
 ### 调拨管理接口
 
@@ -337,6 +392,8 @@ app.use('/api/your-resource', yourRoutes);
 
 ## 📦 部署指南
 
+> 需要跨平台的详细部署脚本与运维建议，请参阅 [docs/deployment.md](docs/deployment.md)。
+
 ### Docker部署（推荐）
 
 ```bash
@@ -352,6 +409,23 @@ docker run -d \
   --name asset-backend \
   asset-qrcode-backend
 ```
+
+### 4. 启动前端接口测试台
+
+```bash
+cd web-admin
+npm run dev
+```
+
+开发模式下默认监听 `http://localhost:5173`，通过浏览器访问即可。在登录页填写后端 API 地址（如 `http://localhost:3000/api`）与测试账号，登录后可在页面中直接调用资产、调拨、维修、盘点等核心接口，便于功能验证。
+
+如需打包成静态站点，可执行：
+
+```bash
+npm run build
+```
+
+编译产物默认输出到 `web-admin/dist`，可部署到任意支持静态文件的服务器（Windows、macOS、Linux 环境均可使用 Node.js 安装依赖后构建）。
 
 ### Linux服务器部署
 

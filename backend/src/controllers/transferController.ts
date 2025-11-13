@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { AssetTransfer, Asset, User, Org, Department } from '../models';
+import { Op } from 'sequelize';
+import { AssetTransfer, Asset, User } from '../models';
 import { AppError } from '../middleware/errorHandler';
 import { generateTransferNo } from '../utils/generator';
-import sequelize from '../config/database';
 
 // 获取调拨列表
 export const getTransfers = async (req: Request, res: Response, next: NextFunction) => {
@@ -16,7 +16,7 @@ export const getTransfers = async (req: Request, res: Response, next: NextFuncti
 
     // 数据权限过滤
     if (req.user && !req.user.roles.includes('SUPER_ADMIN')) {
-      where[sequelize.Op.or] = [
+      where[Op.or] = [
         { from_org_id: req.user.org_id },
         { to_org_id: req.user.org_id }
       ];

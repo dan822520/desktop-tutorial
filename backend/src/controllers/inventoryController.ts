@@ -62,7 +62,7 @@ export const createInventoryTask = async (req: Request, res: Response, next: Nex
     const task_no = generateInventoryTaskNo();
 
     // 确定盘点资产范围
-    let assets = [];
+    let assets: Asset[] = [];
     if (scope_type === '全盘') {
       assets = await Asset.findAll({
         where: { org_id, status: { [Op.ne]: '报废' } },
@@ -89,15 +89,14 @@ export const createInventoryTask = async (req: Request, res: Response, next: Nex
       remark
     });
 
-    // 创建任务资产关联
-    // 注意：这里简化处理，实际应该使用批量插入
-    for (const asset of assets) {
-      await task.$add('assets', asset.id);
-    }
+    const selectedAssetIds = assets.map(asset => asset.id);
 
     res.status(201).json({
       message: '盘点任务创建成功',
-      data: task
+      data: {
+        task: task.get({ plain: true }),
+        selected_asset_ids: selectedAssetIds
+      }
     });
   } catch (error) {
     next(error);
