@@ -1,5 +1,464 @@
-# Welcome to GitHub Desktop!
+# 资产二维码管理系统
 
-This is your README. READMEs are where you can communicate what your project is and how to use it.
+一个面向汽车零部件制造业的资产全生命周期管理系统，支持资产入库、在用、调拨、维修、盘点、报废等全流程管理，通过二维码实现"一物一码"的精细化管理。
 
-Write your name on line 6, save it, and then head back to GitHub Desktop.
+## 📋 项目概述
+
+### 业务背景
+- **行业**：汽车零部件实体制造
+- **规模**：4个分公司，约400名员工
+- **年产值**：约5亿元人民币
+- **目标**：建立统一的数字化资产台账，实现盘点效率提升≥80%，账实一致率≥95%
+
+### 核心功能
+- ✅ 资产全生命周期管理（入库→在用→调拨→维修→盘点→报废）
+- ✅ 二维码自动生成与打印
+- ✅ 跨分公司资产调拨审批流程
+- ✅ 设备报修与维修工单管理
+- ✅ 智能盘点任务与报告
+- ✅ 多角色权限管理（RBAC）
+- ✅ 移动端扫码操作（H5/小程序）
+- ✅ Web管理后台
+
+## 🏗️ 技术架构
+
+### 后端技术栈
+- **框架**：Node.js + Express + TypeScript
+- **数据库**：MySQL 5.7+
+- **ORM**：Sequelize
+- **认证**：JWT (JSON Web Token)
+- **二维码**：qrcode库
+- **文档**：RESTful API
+
+### 前端技术栈
+- **Web管理后台**：React 18 + Ant Design + TypeScript
+- **移动端**：React H5（可转换为微信小程序）
+- **状态管理**：React Context/Redux
+- **HTTP客户端**：Axios
+- **构建工具**：Vite
+
+### 数据库设计
+核心数据表包括：
+- 组织与用户：`org`、`department`、`role`、`user`、`user_role`
+- 资产管理：`asset`、`asset_category`、`asset_photo`
+- 业务流程：`asset_transfer`、`asset_repair`、`inventory_task`、`inventory_record`
+- 系统日志：`audit_log`
+
+## 📁 项目结构
+
+```
+.
+├── backend/                 # 后端服务
+│   ├── src/
+│   │   ├── config/         # 配置文件（数据库、JWT等）
+│   │   ├── controllers/    # 控制器
+│   │   ├── models/         # Sequelize模型
+│   │   ├── routes/         # 路由
+│   │   ├── middleware/     # 中间件（认证、错误处理）
+│   │   ├── utils/          # 工具函数（二维码、编号生成）
+│   │   └── index.ts        # 应用入口
+│   ├── scripts/            # 数据库初始化脚本
+│   ├── package.json
+│   └── tsconfig.json
+├── web-admin/              # Web管理后台（待开发）
+│   └── src/
+├── mobile-app/             # 移动端H5（待开发）
+│   └── src/
+├── docs/                   # 文档
+└── README.md
+```
+
+## 🚀 快速开始
+
+### 环境要求
+- Node.js >= 16.x
+- MySQL >= 5.7
+- npm 或 yarn
+
+### 1. 安装依赖
+
+```bash
+# 后端
+cd backend
+npm install
+```
+
+### 2. 配置环境变量
+
+```bash
+# 复制环境变量模板
+cp backend/.env.example backend/.env
+
+# 编辑配置文件
+# 修改数据库连接信息、JWT密钥等
+vi backend/.env
+```
+
+关键配置项：
+```env
+# 数据库配置
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=asset_qrcode_db
+DB_USER=root
+DB_PASSWORD=your_password
+
+# JWT配置
+JWT_SECRET=your_jwt_secret_key_change_this_in_production
+
+# 服务器配置
+PORT=3000
+NODE_ENV=development
+```
+
+### 3. 初始化数据库
+
+```bash
+# 方法1：使用MySQL命令行执行SQL脚本
+mysql -u root -p < backend/scripts/init_database.sql
+
+# 方法2：手动创建数据库后由Sequelize自动同步（开发环境）
+# 确保 .env 中的数据库配置正确
+# 启动时会自动同步表结构
+```
+
+### 4. 初始化种子数据
+
+```bash
+cd backend
+npx ts-node scripts/seed.ts
+```
+
+初始账号：
+- **超级管理员**：用户名 `admin`，密码 `admin123`
+- **测试员工**：用户名 `employee001`，密码 `123456`
+
+### 5. 启动后端服务
+
+```bash
+cd backend
+
+# 开发模式（热重载）
+npm run dev
+
+# 生产模式
+npm run build
+npm start
+```
+
+服务启动后访问：http://localhost:3000
+
+### 6. API测试
+
+使用Postman或curl测试API：
+
+```bash
+# 健康检查
+curl http://localhost:3000/health
+
+# 登录
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"admin123"}'
+
+# 获取资产列表（需要JWT token）
+curl http://localhost:3000/api/assets \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+## 📚 API文档
+
+### 认证接口
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/api/auth/login` | 用户登录 |
+| GET | `/api/auth/profile` | 获取当前用户信息 |
+| POST | `/api/auth/logout` | 用户登出 |
+
+### 资产管理接口
+
+| 方法 | 路径 | 说明 | 权限 |
+|------|------|------|------|
+| GET | `/api/assets` | 获取资产列表 | 所有用户 |
+| GET | `/api/assets/:id` | 获取资产详情 | 所有用户 |
+| GET | `/api/assets/scan/:asset_id` | 扫码查询资产 | 所有用户 |
+| POST | `/api/assets` | 创建资产 | 管理员 |
+| PUT | `/api/assets/:id` | 更新资产 | 管理员 |
+| DELETE | `/api/assets/:id` | 删除资产（标记报废） | 管理员 |
+| POST | `/api/assets/qrcode/batch` | 批量生成二维码 | 管理员 |
+
+### 调拨管理接口
+
+| 方法 | 路径 | 说明 | 权限 |
+|------|------|------|------|
+| GET | `/api/transfers` | 获取调拨列表 | 所有用户 |
+| POST | `/api/transfers` | 创建调拨申请 | 所有用户 |
+| PUT | `/api/transfers/:id/approve` | 审批调拨 | 管理员 |
+
+### 报修管理接口
+
+| 方法 | 路径 | 说明 | 权限 |
+|------|------|------|------|
+| GET | `/api/repairs` | 获取维修工单列表 | 所有用户 |
+| POST | `/api/repairs` | 创建报修 | 所有用户 |
+| PUT | `/api/repairs/:id/assign` | 派单 | 管理员 |
+| PUT | `/api/repairs/:id/complete` | 完成维修 | 维修人员/管理员 |
+
+### 盘点管理接口
+
+| 方法 | 路径 | 说明 | 权限 |
+|------|------|------|------|
+| GET | `/api/inventory/tasks` | 获取盘点任务列表 | 所有用户 |
+| POST | `/api/inventory/tasks` | 创建盘点任务 | 管理员 |
+| POST | `/api/inventory/tasks/:task_id/scan` | 扫码盘点 | 所有用户 |
+| PUT | `/api/inventory/tasks/:id/finish` | 完成盘点 | 管理员 |
+| GET | `/api/inventory/tasks/:id/report` | 获取盘点报告 | 所有用户 |
+
+## 👥 角色权限说明
+
+### 角色定义
+
+| 角色代码 | 角色名称 | 权限范围 |
+|---------|---------|---------|
+| SUPER_ADMIN | 超级管理员 | 全部权限，可访问所有组织数据 |
+| ORG_ADMIN | 分公司管理员 | 管理本公司资产、审批调拨/报修 |
+| DEPT_ADMIN | 部门资产管理员 | 管理本部门资产、执行盘点 |
+| REPAIR_STAFF | 维修人员 | 接收和处理维修工单 |
+| EMPLOYEE | 普通员工 | 查看资产、提交报修/调拨申请 |
+
+### 权限矩阵
+
+| 功能 | 超管 | 分公司管理员 | 部门管理员 | 维修人员 | 员工 |
+|-----|------|------------|-----------|---------|-----|
+| 资产查看 | ✅ 全部 | ✅ 本公司 | ✅ 本部门 | ✅ 相关 | ✅ 相关 |
+| 资产创建/编辑 | ✅ | ✅ | ✅ 部分字段 | ❌ | ❌ |
+| 调拨申请 | ✅ | ✅ | ✅ | ❌ | ✅ |
+| 调拨审批 | ✅ | ✅ | ❌ | ❌ | ❌ |
+| 报修提交 | ✅ | ✅ | ✅ | ❌ | ✅ |
+| 维修派单 | ✅ | ✅ | ✅ | ❌ | ❌ |
+| 维修处理 | ✅ | ✅ | ✅ | ✅ | ❌ |
+| 盘点任务创建 | ✅ | ✅ | ❌ | ❌ | ❌ |
+| 盘点执行 | ✅ | ✅ | ✅ | ❌ | ❌ |
+
+## 🔧 开发指南
+
+### 添加新的API接口
+
+1. **创建模型**（如果需要新表）
+```typescript
+// backend/src/models/YourModel.ts
+import { Model, DataTypes } from 'sequelize';
+import sequelize from '../config/database';
+
+class YourModel extends Model {
+  // 定义字段类型
+}
+
+YourModel.init({
+  // 定义字段
+}, {
+  sequelize,
+  tableName: 'your_table',
+  timestamps: true
+});
+
+export default YourModel;
+```
+
+2. **创建控制器**
+```typescript
+// backend/src/controllers/yourController.ts
+import { Request, Response, NextFunction } from 'express';
+import { YourModel } from '../models';
+
+export const getList = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const data = await YourModel.findAll();
+    res.json({ data });
+  } catch (error) {
+    next(error);
+  }
+};
+```
+
+3. **创建路由**
+```typescript
+// backend/src/routes/your-routes.ts
+import { Router } from 'express';
+import * as controller from '../controllers/yourController';
+import { authenticate } from '../middleware/auth';
+
+const router = Router();
+router.use(authenticate);
+router.get('/', controller.getList);
+
+export default router;
+```
+
+4. **注册路由**
+```typescript
+// backend/src/index.ts
+import yourRoutes from './routes/your-routes';
+app.use('/api/your-resource', yourRoutes);
+```
+
+### 数据库迁移
+
+生产环境建议使用专业的数据库迁移工具，如：
+- Sequelize CLI
+- TypeORM migrations
+- 手动SQL脚本版本管理
+
+### 代码规范
+
+- 使用 TypeScript 严格模式
+- 遵循 ESLint 规则
+- 统一使用 async/await 处理异步
+- 错误统一通过 next(error) 传递给错误处理中间件
+- 所有API返回格式统一：`{ data: ..., message: ... }` 或 `{ error: ... }`
+
+## 🔒 安全建议
+
+1. **生产环境必须修改**：
+   - JWT_SECRET
+   - 数据库密码
+   - 默认管理员密码
+
+2. **HTTPS部署**：生产环境必须使用HTTPS
+
+3. **速率限制**：已内置，可根据实际需求调整
+
+4. **SQL注入防护**：使用Sequelize参数化查询自动防护
+
+5. **XSS防护**：前端需对用户输入进行转义
+
+6. **CSRF防护**：JWT已经天然防护CSRF
+
+## 📦 部署指南
+
+### Docker部署（推荐）
+
+```bash
+# 构建后端镜像
+cd backend
+docker build -t asset-qrcode-backend .
+
+# 运行容器
+docker run -d \
+  -p 3000:3000 \
+  -e DB_HOST=your_db_host \
+  -e DB_PASSWORD=your_db_password \
+  --name asset-backend \
+  asset-qrcode-backend
+```
+
+### Linux服务器部署
+
+```bash
+# 1. 安装Node.js和MySQL
+# 2. 克隆代码
+git clone <your-repo-url>
+cd asset-qrcode-system/backend
+
+# 3. 安装依赖
+npm install --production
+
+# 4. 构建
+npm run build
+
+# 5. 使用PM2管理进程
+npm install -g pm2
+pm2 start dist/index.js --name asset-backend
+pm2 save
+pm2 startup
+```
+
+### Nginx反向代理配置
+
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+
+    location /api {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    location / {
+        root /path/to/web-admin/dist;
+        try_files $uri $uri/ /index.html;
+    }
+}
+```
+
+## 🧪 测试
+
+```bash
+# 单元测试（待实现）
+npm test
+
+# 集成测试（待实现）
+npm run test:integration
+
+# API测试
+# 使用 Postman 导入 docs/api-collection.json
+```
+
+## 📈 性能优化建议
+
+1. **数据库索引**：已在关键字段创建索引
+2. **分页查询**：所有列表接口支持分页
+3. **缓存策略**：可使用Redis缓存用户信息和权限
+4. **CDN**：静态资源（二维码图片）使用CDN
+5. **数据库连接池**：已配置Sequelize连接池
+
+## 🐛 常见问题
+
+### 1. 数据库连接失败
+- 检查MySQL是否启动
+- 检查.env中的数据库配置
+- 确认数据库用户权限
+
+### 2. JWT token过期
+- 默认有效期7天，可在配置文件修改
+- 前端需实现token刷新机制
+
+### 3. 二维码图片无法访问
+- 确保 `uploads/qrcodes` 目录存在
+- 检查文件权限
+- 确认静态文件服务配置正确
+
+## 🗺️ 路线图
+
+### 已完成
+- ✅ 后端核心API开发
+- ✅ 数据库设计与实现
+- ✅ 认证与权限系统
+- ✅ 二维码生成功能
+
+### 待开发
+- ⏳ Web管理后台前端
+- ⏳ 移动端H5应用
+- ⏳ Excel批量导入导出
+- ⏳ 数据报表与统计图表
+- ⏳ 微信小程序版本
+- ⏳ 与财务系统对接
+
+## 📞 联系与支持
+
+- 问题反馈：[GitHub Issues](your-repo-url/issues)
+- 技术文档：[Wiki](your-repo-url/wiki)
+
+## 📄 开源协议
+
+MIT License
+
+---
+
+**注意**：本系统为企业内部使用，请妥善保管账号密码和敏感配置信息。
