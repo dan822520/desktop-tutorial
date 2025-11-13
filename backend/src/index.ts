@@ -22,6 +22,7 @@ import assetRoutes from './routes/assets';
 import transferRoutes from './routes/transfers';
 import repairRoutes from './routes/repairs';
 import inventoryRoutes from './routes/inventory';
+import testDataRoutes from './routes/testData';
 
 // 导入模型（确保关联关系被加载）
 import './models';
@@ -66,6 +67,7 @@ app.use('/api/assets', assetRoutes);
 app.use('/api/transfers', transferRoutes);
 app.use('/api/repairs', repairRoutes);
 app.use('/api/inventory', inventoryRoutes);
+app.use('/api/test-data', testDataRoutes);
 
 // 404处理
 app.use(notFound);

@@ -58,11 +58,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
         org_id: user.org_id
       },
       jwtConfig.secret,
-      {
-        expiresIn: jwtConfig.expiresIn,
-        issuer: jwtConfig.issuer,
-        audience: jwtConfig.audience
-      }
+      jwtConfig.signOptions
     );
 
     // 更新最后登录时间
