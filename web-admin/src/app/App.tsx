@@ -6,11 +6,12 @@ import AssetTester from '../features/assets/AssetTester';
 import InventoryTester from '../features/inventory/InventoryTester';
 import RepairTester from '../features/repairs/RepairTester';
 import TransferTester from '../features/transfers/TransferTester';
+import UserTester from '../features/users/UserTester';
 import ResponseView from '../components/common/ResponseView';
 import TestDataManager from '../features/testData/TestDataManager';
 import './App.css';
 
-type TabKey = 'assets' | 'inventory' | 'repairs' | 'transfers' | 'profile' | 'testData';
+type TabKey = 'assets' | 'inventory' | 'repairs' | 'transfers' | 'users' | 'profile' | 'testData';
 
 const DEFAULT_BASE_URL = 'http://localhost:3000/api/';
 
@@ -86,6 +87,11 @@ const App: React.FC = () => {
     [userInfo]
   );
 
+  const canManageUsers = useMemo(
+    () => (userInfo?.roles || []).some((role: any) => role.code === 'SUPER_ADMIN' || role.code === 'ORG_ADMIN'),
+    [userInfo]
+  );
+
   useEffect(() => {
     if (!isSuperAdmin && activeTab === 'testData') {
       setActiveTab('assets');
@@ -101,12 +107,16 @@ const App: React.FC = () => {
       { key: 'profile', label: '当前用户' }
     ];
 
+    if (canManageUsers) {
+      base.splice(4, 0, { key: 'users', label: '组织与用户' });
+    }
+
     if (isSuperAdmin) {
       base.push({ key: 'testData', label: '测试数据' });
     }
 
     return base;
-  }, [isSuperAdmin]);
+  }, [isSuperAdmin, canManageUsers]);
 
   if (!token) {
     return (
@@ -136,6 +146,8 @@ const App: React.FC = () => {
         return <RepairTester invoke={invoke} />;
       case 'transfers':
         return <TransferTester invoke={invoke} />;
+      case 'users':
+        return <UserTester invoke={invoke} />;
       case 'testData':
         return <TestDataManager invoke={invoke} />;
       case 'profile':
