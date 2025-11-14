@@ -31,11 +31,11 @@
 - **文档**：RESTful API
 
 ### 前端技术栈
-- **Web管理后台**：React 18 + Ant Design + TypeScript
-- **移动端**：React H5（可转换为微信小程序）
-- **状态管理**：React Context/Redux
-- **HTTP客户端**：Axios
-- **构建工具**：Vite
+- **Web管理后台/接口测试台**：React 18 + TypeScript + Vite（原生组件实现，无第三方 UI 框架）
+- **移动端 H5（可拓展为微信小程序）**：React 18 + Vite + `@zxing/browser`（内置扫码能力）
+- **状态管理**：React Hooks（`useState`、`useEffect` 等）
+- **HTTP 客户端**：原生 `fetch` 封装
+- **构建工具**：Vite + TypeScript
 
 ### 数据库设计
 核心数据表包括：
@@ -68,8 +68,12 @@
 │       ├── services/        # API 客户端与网络工具
 │       ├── styles/          # 全局样式文件
 │       └── types/           # 共享类型定义
-├── mobile-app/             # 移动端H5（待开发）
+├── mobile-app/             # 移动端 H5 应用（登录、扫码、个人中心）
 │   └── src/
+│       ├── api/            # fetch 封装
+│       ├── components/     # 移动端组件（扫码、登录、资产卡片等）
+│       ├── App.tsx         # 应用入口
+│       └── styles.css      # 移动端样式
 ├── docs/                   # 文档（新增跨平台部署指南）
 └── README.md
 ```
@@ -92,6 +96,12 @@ npm install
 ```bash
 # 前端接口测试台
 cd web-admin
+npm install
+```
+
+```bash
+# 移动端 H5 应用
+cd mobile-app
 npm install
 ```
 
@@ -162,7 +172,35 @@ npm start
 
 服务启动后访问：http://localhost:3000
 
-### 6. API测试
+### 6. 启动前端应用
+
+#### Web 管理后台（接口测试台）
+
+```bash
+cd web-admin
+npm run dev
+# 或
+npm run build
+npm run preview
+```
+
+访问：http://localhost:5173（默认端口，可在 `vite.config.ts` 中调整）。
+
+#### 移动端 H5（扫码入口，可封装为小程序 WebView）
+
+```bash
+cd mobile-app
+npm run dev
+# 或
+npm run build
+npm run preview
+```
+
+访问：http://localhost:4174。首次进入请配置 API 地址并使用有效账号登录，即可体验登录、扫码资产、查看个人信息等核心流程。
+
+> 若需要在微信小程序中使用，可将 H5 应用部署到 HTTPS 域名并使用 WebView 方式嵌入，扫码能力沿用浏览器 API。
+
+### 7. API测试
 
 使用Postman或curl测试API：
 
@@ -180,7 +218,7 @@ curl http://localhost:3000/api/assets \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
-### 7. 测试数据填充工具
+### 8. 测试数据填充工具
 
 接口测试前端新增“测试数据”标签页（仅超级管理员可见），可一键完成以下操作：
 
@@ -214,6 +252,25 @@ curl -X DELETE http://localhost:3000/api/test-data \
 ```
 
 ## 📚 API文档
+
+## 📱 移动端 H5 功能概览
+
+- **统一登录**：支持输入后端 API 地址与账号密码，完成 JWT 登录并缓存 Token。
+- **扫码资产**：基于浏览器摄像头能力和 `@zxing/browser` 实现实时扫码，自动请求 `/api/assets/scan/:asset_id` 接口。
+- **手动录入兜底**：扫码异常时可手动输入资产编号进行查询。
+- **资产详情展示**：成功扫码后以卡片形式展示资产状态、位置、负责人、分类等关键信息。
+- **个人中心**：展示当前用户组织、部门、角色信息，并支持在移动端直接调整 API 地址。
+- **待办占位**：保留审批、盘点等高级功能入口，引导管理员前往 Web 后台处理。
+
+> 该 H5 应用可作为微信小程序 WebView 外壳的核心页面代码，后续仅需封装微信登录或调用微信扫码能力即可无缝迁移。
+
+## 🖥️ Web 管理后台（接口测试台）能力
+
+- **账号登录与 Token 管理**：输入 API 地址与凭证后即可登录，自动缓存 Token 并展示 `/auth/profile` 响应。
+- **资产模块**：提供资产列表、创建、详情、扫码查询、二维码批量生成等接口操作表单。
+- **调拨 / 报修 / 盘点**：分别提供待办接口的调用器，方便在开发阶段验证流程 API。
+- **组织与用户管理**：支持超级管理员维护组织、部门、用户、角色与分配关系。
+- **测试数据面板**：一键安装/卸载官方测试数据集，便于演示环境初始化。
 
 ### 认证接口
 

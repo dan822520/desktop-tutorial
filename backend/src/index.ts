@@ -23,6 +23,11 @@ import transferRoutes from './routes/transfers';
 import repairRoutes from './routes/repairs';
 import inventoryRoutes from './routes/inventory';
 import testDataRoutes from './routes/testData';
+import orgRoutes from './routes/orgs';
+import departmentRoutes from './routes/departments';
+import roleRoutes from './routes/roles';
+import userRoutes from './routes/users';
+import userRoleRoutes from './routes/userRoles';
 
 // 导入模型（确保关联关系被加载）
 import './models';
@@ -68,6 +73,11 @@ app.use('/api/transfers', transferRoutes);
 app.use('/api/repairs', repairRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/test-data', testDataRoutes);
+app.use('/api/orgs', orgRoutes);
+app.use('/api/departments', departmentRoutes);
+app.use('/api/roles', roleRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/user-roles', userRoleRoutes);
 
 // 404处理
 app.use(notFound);
